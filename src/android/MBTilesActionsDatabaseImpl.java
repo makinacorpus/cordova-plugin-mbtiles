@@ -101,25 +101,30 @@ public class MBTilesActionsDatabaseImpl extends MBTilesActionsGenImpl
 		
 		JSONObject metadata = new JSONObject();
 		
-		if (cursor.moveToFirst())
+		try
 		{
-			while (!cursor.isAfterLast())
+			if (cursor.moveToFirst())
 			{
-				try
+				while (!cursor.isAfterLast())
 				{
-					metadata.put(cursor.getString(cursor.getColumnIndex("name")), cursor.getString(cursor.getColumnIndex("value")));
+					try
+					{
+						metadata.put(cursor.getString(cursor.getColumnIndex("name")), cursor.getString(cursor.getColumnIndex("value")));
+					}
+					catch (JSONException je)
+					{
+						Log.e(getClass().getName(), je.getMessage(), je);
+					}
+					
+					cursor.moveToNext();
 				}
-				catch (JSONException je)
-				{
-					Log.e(getClass().getName(), je.getMessage(), je);
-				}
-				
-				cursor.moveToNext();
 			}
 		}
-		
+		finally
+		{
 		cursor.close();
-		
+		}
+
 		return metadata;
 	}
 
@@ -130,20 +135,25 @@ public class MBTilesActionsDatabaseImpl extends MBTilesActionsGenImpl
 		
 		JSONObject minZoom = new JSONObject();
 		
-		// we should have only one result
-		if (cursor.moveToFirst())
+		try
 		{
-			try
+			// we should have only one result
+			if (cursor.moveToFirst())
 			{
-				minZoom.put(KEY_MIN_ZOOM, cursor.getInt(cursor.getColumnIndex("min_zoom")));
-			}
-			catch (JSONException je)
-			{
-				Log.e(getClass().getName(), je.getMessage(), je);
+				try
+				{
+					minZoom.put(KEY_MIN_ZOOM, cursor.getInt(cursor.getColumnIndex("min_zoom")));
+				}
+				catch (JSONException je)
+				{
+					Log.e(getClass().getName(), je.getMessage(), je);
+				}
 			}
 		}
-		
+		finally
+		{
 		cursor.close();
+		}
 		
 		return minZoom;
 	}
@@ -155,20 +165,25 @@ public class MBTilesActionsDatabaseImpl extends MBTilesActionsGenImpl
 		
 		JSONObject maxZoom = new JSONObject();
 		
-		// we should have only one result
-		if (cursor.moveToFirst())
+		try
 		{
-			try
+			// we should have only one result
+			if (cursor.moveToFirst())
 			{
-				maxZoom.put(KEY_MAX_ZOOM, cursor.getInt(cursor.getColumnIndex("max_zoom")));
-			}
-			catch (JSONException je)
-			{
-				Log.e(getClass().getName(), je.getMessage(), je);
+				try
+				{
+					maxZoom.put(KEY_MAX_ZOOM, cursor.getInt(cursor.getColumnIndex("max_zoom")));
+				}
+				catch (JSONException je)
+				{
+					Log.e(getClass().getName(), je.getMessage(), je);
+				}
 			}
 		}
-		
+		finally
+		{
 		cursor.close();
+		}
 		
 		return maxZoom;
 	}
@@ -203,20 +218,25 @@ public class MBTilesActionsDatabaseImpl extends MBTilesActionsGenImpl
 		
 		JSONObject tileData = new JSONObject();
 		
-		// we should have only one result
-		if (cursor.moveToFirst())
+		try
 		{
-			try
+			// we should have only one result
+			if (cursor.moveToFirst())
 			{
-				tileData.put(KEY_TILE_DATA, Base64.encodeToString(cursor.getBlob(cursor.getColumnIndex("tile_data")), Base64.DEFAULT));
-			}
-			catch (JSONException je)
-			{
-				Log.e(getClass().getName(), je.getMessage(), je);
+				try
+				{
+					tileData.put(KEY_TILE_DATA, Base64.encodeToString(cursor.getBlob(cursor.getColumnIndex("tile_data")), Base64.DEFAULT));
+				}
+				catch (JSONException je)
+				{
+					Log.e(getClass().getName(), je.getMessage(), je);
+				}
 			}
 		}
-		
+		finally
+		{
 		cursor.close();
+		}
 		
 		return tileData;
 	}
@@ -261,49 +281,54 @@ public class MBTilesActionsDatabaseImpl extends MBTilesActionsGenImpl
 			// run the query
 			Cursor cursor = db.rawQuery(query, params);
 			if (cursor != null) {
-				// loop the row
-				while (cursor.moveToNext()) {
-					JSONObject row = new JSONObject();
-					// loop the column
-					for (String name : cursor.getColumnNames()) {
-						if (name != null ) {
-							int columnIndex = cursor.getColumnIndex(name);
-							if (columnIndex >= 0) {
-								// get type of data in column
-								int type = getType(cursor, columnIndex);
-								Object value ;
-								// treat the data
-								switch (type) {
-								case FIELD_TYPE_BLOB:
-									value = Base64.encodeToString(cursor.getBlob(columnIndex),Base64.DEFAULT);
-									break;
-								case FIELD_TYPE_FLOAT:
-									value = cursor.getDouble(columnIndex);
-									break;
-								case FIELD_TYPE_INTEGER:
-									value = cursor.getInt(columnIndex);
-									break;
-								case FIELD_TYPE_STRING:
-									value = cursor.getString(columnIndex);
-									break;
-								case FIELD_TYPE_NULL:
-								default:
-									value = null;
-									break;
-								}
-								// put in JSONObject
-								try {
-									row.put(name, value);
-								} catch (JSONException e) {
-									Log.w(getClass().getName(), e.getMessage());
+				try {
+					// loop the row
+					while (cursor.moveToNext()) {
+						JSONObject row = new JSONObject();
+						// loop the column
+						for (String name : cursor.getColumnNames()) {
+							if (name != null ) {
+								int columnIndex = cursor.getColumnIndex(name);
+								if (columnIndex >= 0) {
+									// get type of data in column
+									int type = getType(cursor, columnIndex);
+									Object value ;
+									// treat the data
+									switch (type) {
+									case FIELD_TYPE_BLOB:
+										value = Base64.encodeToString(cursor.getBlob(columnIndex),Base64.DEFAULT);
+										break;
+									case FIELD_TYPE_FLOAT:
+										value = cursor.getDouble(columnIndex);
+										break;
+									case FIELD_TYPE_INTEGER:
+										value = cursor.getInt(columnIndex);
+										break;
+									case FIELD_TYPE_STRING:
+										value = cursor.getString(columnIndex);
+										break;
+									case FIELD_TYPE_NULL:
+									default:
+										value = null;
+										break;
+									}
+									// put in JSONObject
+									try {
+										row.put(name, value);
+									} catch (JSONException e) {
+										Log.w(getClass().getName(), e.getMessage());
+									}
 								}
 							}
 						}
+						// put in JSONArray
+						rows.put(row);
 					}
-					// put in JSONArray
-					rows.put(row);
 				}
-				cursor.close();
+				finally
+				{
+					cursor.close();
+				}
 			}
 		}
 		// put all rows in JSONObject
